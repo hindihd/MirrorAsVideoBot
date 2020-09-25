@@ -1,12 +1,12 @@
 {
-  "name": "Telegram Mirror As Video",
+  "name": "Telegram Mirror Streamer",
   "description": "A Telegram Mirror (youtube-dl) Leecher.",
   "keywords": [
     "facebook"
   ],
-  "repository": "https://github.com/ravidkumar/mirrorasvideo",
+  "repository": "https://github.com/ravidkumar/mirrorstreamerbot",
   "success_url": "https://t.me/modzilla",
-  "website": "https://github.com/ravidkumar/mirrorasvideo",
+  "website": "https://github.com/ravidkumar/mirrorstreamerbot",
   "env": {
     "ENV": {
       "description": "Setting this to ANYTHING will enable webhooks when in env mode",
