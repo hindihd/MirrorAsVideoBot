@@ -50,6 +50,7 @@ async def aria_start():
     aria2_daemon_start_cmd.append("--rpc-max-request-size=1024M")
     aria2_daemon_start_cmd.append("--seed-ratio=0.0")
     aria2_daemon_start_cmd.append("--seed-time=1")
+    aria2_daemon_start_cmd.append("--max-overall-upload-limit=1K")
     aria2_daemon_start_cmd.append("--split=10")
     #aria2_daemon_start_cmd.append(f"--bt-stop-timeout={MAX_TIME_TO_WAIT_FOR_TORRENTS_TO_START}")
     #
@@ -231,16 +232,16 @@ async def call_apropriate_function(
             message_id = final_response[key_f_res_se]
             channel_id = str(sent_message_to_update_tg_p.chat.id)[4:]
             private_link = f"https://t.me/c/{channel_id}/{message_id}"
-            message_to_send += "📃 <a href='"
+            message_to_send += "👉 <a href='"
             message_to_send += private_link
             message_to_send += "'>"
             message_to_send += local_file_name
             message_to_send += "</a>"
             message_to_send += "\n"
         if message_to_send != "":
-            mention_req_user = f"<a href='tg://user?id={user_id}'>Downloaded & Uploaded Successfully 📭</a>\n\n"
+            mention_req_user = f"<a href='tg://user?id={user_id}'>Your Requested Files</a>\n\n"
             message_to_send = mention_req_user + message_to_send
-            message_to_send = message_to_send + "\n\n" + "#Uploaded\n\n<b>Powered By @Modzilla</b>"
+            message_to_send = message_to_send + "\n\n" + "#uploads"
         else:
             message_to_send = "<i>FAILED</i> to upload files. 😞😞"
         await user_message.reply_text(
@@ -401,16 +402,16 @@ async def call_apropriate_function_t(
         message_id = final_response[key_f_res_se]
         channel_id = str(AUTH_CHANNEL)[4:]
         private_link = f"https://t.me/c/{channel_id}/{message_id}"
-        message_to_send += "📃 <a href='"
+        message_to_send += "👉 <a href='"
         message_to_send += private_link
         message_to_send += "'>"
         message_to_send += local_file_name
         message_to_send += "</a>"
         message_to_send += "\n"
     if message_to_send != "":
-        mention_req_user = f"<a href='tg://user?id={user_id}'>Download & Upload Completed 📭</a>\n\n"
+        mention_req_user = f"<a href='tg://user?id={user_id}'>Your Requested Files</a>\n\n"
         message_to_send = mention_req_user + message_to_send
-        message_to_send = message_to_send + "\n\n" + "#Uploaded\n\n<b>Powered By @Modzilla</b>"
+        message_to_send = message_to_send + "\n\n" + "#uploads"
     else:
         message_to_send = "<i>FAILED</i> to upload files. 😞😞"
     await sent_message_to_update_tg_p.reply_to_message.reply_text(
@@ -442,17 +443,23 @@ async def check_progress_for_dl(aria2, gid, event, previous_message):
                 except:
                     pass
                 #
-                msg = f"\n<b>○ File:</b> `{downloading_dir_name}`"
-                msg += f"\n<b>○ Progress:</b> <b>⧼⧼ {file.progress_string()} ⧽⧽</b> <b><u>Of</u></b><b>『 {file.total_length_string()} 』</b>"
-                msg += f"\n<b>○ Speed:</b> `{file.download_speed_string()} 🌝` || `{file.upload_speed_string()} 🌚`"
-
                 if is_file is None :
-                   msg += f"\n<b>○ Connections:</b> {file.connections}"
+                   msgg = f"Conn: {file.connections} <b>|</b> GID: <code>{gid}</code>"
                 else :
-                   msg += f"\n<b>○ Peers:</b> {file.connections} || <b>○ Seeders:</b> {file.num_seeders}"
+                   msgg = f"P: {file.connections} | S: {file.num_seeders} <b>|</b> GID: <code>{gid}</code>"
+                msg = f"\n`{downloading_dir_name}`"
+                msg += f"\n<b>Speed</b>: {file.download_speed_string()}"
+                msg += f"\n<b>Status</b>: {file.progress_string()} <b>of</b> {file.total_length_string()} <b>|</b> {file.eta_string()} <b>|</b> {msgg}"
+                #msg += f"\nSize: {file.total_length_string()}"
 
-                # msg += f"\n<b>○ Status: {file.status}</b>"
-                msg += f"\n<b>○ ETA: {file.eta_string()}</b>"
+                #if is_file is None :
+                   #msg += f"\n<b>Conn:</b> {file.connections}, GID: <code>{gid}</code>"
+                #else :
+                   #msg += f"\n<b>Info:</b>[ P : {file.connections} | S : {file.num_seeders} ], GID: <code>{gid}</code>"
+
+                #msg += f"\nStatus: {file.status}"
+                #msg += f"\nETA: {file.eta_string()}"
+                #msg += f"\nGID: <code>{gid}</code>"
                 inline_keyboard = []
                 ikeyboard = []
                 ikeyboard.append(InlineKeyboardButton("Cancel 🚫", callback_data=(f"cancel {gid}").encode("UTF-8")))
@@ -472,21 +479,30 @@ async def check_progress_for_dl(aria2, gid, event, previous_message):
             await check_progress_for_dl(aria2, gid, event, previous_message)
         else:
             await asyncio.sleep(EDIT_SLEEP_TIME_OUT)
-            await event.edit(f"<b>File Downloaded Successfully:</b>\n\n`{file.name}`")
+            await event.edit(f"Downloaded Successfully: `{file.name}`")
             return True
+    except aria2p.client.ClientException:
+        pass
+    except MessageNotModified:
+        pass
+    except RecursionError:
+        file.remove(force=True)
+        await event.edit(
+            "Download Auto Canceled :\n\n"
+            "Your Torrent/Link is Dead.".format(
+                file.name
+            )
+        )
+        return False
     except Exception as e:
         LOGGER.info(str(e))
         if " not found" in str(e) or "'file'" in str(e):
-            await event.edit("Download Canceled")
-            return False
-        elif " depth exceeded" in str(e):
-            file.remove(force=True)
-            await event.edit("Download Auto Canceled\nYour Torrent/Link is Dead.")
+            await event.edit("Download Canceled :\n<code>{}</code>".format(file.name))
             return False
         else:
             LOGGER.info(str(e))
-            await event.edit("<u>error</u> :\n`{}` \n\n#error".format(str(e)))
-            return
+            await event.edit("<u>error</u> :\n<code>{}</code> \n\n#error".format(str(e)))
+            return False
 # https://github.com/jaskaranSM/UniBorg/blob/6d35cf452bce1204613929d4da7530058785b6b1/stdplugins/aria.py#L136-L164
 
 
