@@ -240,7 +240,7 @@ async def call_apropriate_function(
         if message_to_send != "":
             mention_req_user = f"<a href='tg://user?id={user_id}'>Downloaded & Uploaded Successfully 📭</a>\n\n"
             message_to_send = mention_req_user + message_to_send
-            message_to_send = message_to_send + "\n\n" + "#Uploaded\n\n<b>Powered By @Modzilla</b>"
+            message_to_send = message_to_send + "\n\n" + "#Uploaded\n\n<b>Powered By @AnimeDubbed_1</b>"
         else:
             message_to_send = "<i>FAILED</i> to upload files. 😞😞"
         await user_message.reply_text(
